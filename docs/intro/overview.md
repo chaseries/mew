@@ -9,15 +9,18 @@ The behavior and types of some basic effect-causing I/O operations look like the
 #### Input
 
 **`gets : Io String`**
+
 Reads a line from standard input as a Mew `String`.
 
 #### Output
 
 ##### Strings
 **`puts : String -> Io ()`**
+
 Causes a `String` to be written to standard output.
 
 **`putsLine : String -> Io ()`**
+
 Causes a `String` and newline to be written to standard output.
 
 ##### Other structures
@@ -25,13 +28,15 @@ Causes a `String` and newline to be written to standard output.
 More generally, one can use the following functions, which are defined against any type that implements the type class `Show`:
 
 **`put : a -> Io ()`**
+
 Causes a type implementing class `Show` to be output. Defined simply as `put = show ~> puts`<sup>†</sup>.
 
 **`putLine : a -> Io ()`**
+
 Causes a type implementing class `Show` to be output with a newline, if none exists. Defined simply as `putLine = show ~> putsLine`<sup>†</sup>.
 
 ---
-<sup>†</sup>The operator `~>` represents forward function composition. That is, `~>` takes two functions, each with a single parameter, and makes a new function out of them blue glueing the output of the left-hand side function to the input of the right-hand side function.
+<sup>†</sup>The operator `~>` represents forward function composition. That is, `~>` takes two functions, each with a single parameter, and makes a new function out of them by glueing the output of the left-hand side function to the input of the right-hand side function.
 
 To illustrate with absolute clarity, one can review the following sequence of identically-behaving definitions:
 ```
@@ -39,7 +44,6 @@ put x = puts (show x)
 put x = (show ~> puts) x
 put = (show ~> puts)
 ```
-
 
 ### Comments
 
