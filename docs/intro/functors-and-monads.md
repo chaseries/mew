@@ -74,39 +74,23 @@ instance Maybe of Functor
 
 ## Monads
 
-*Monad* is a term cloaked in a lot of misunderstanding because there is no simple answer to the question *what is a monad?*
-
-I'm going to try a novel approach. Since many modern programmers—even those from non-functional backgrounds—understand mapping (and therefore a reasonable intuition for functors), I'll start of by showing the difference between a functor and a monad.
-
 Let's recall the type of `map` on any functor:
 ```
 map : (a -> b) -> f a -> f b
 ```
 
-Want to make your type a functor? Implement a function `map` that works over it and you're done. That's the rule specified in the interface. The "concept" of a functor, then, is just a container type that defines a `map` function so that its contents may be altered. The implementation varies and the type signature of `map` is specialized based on the functor in question, but it follows the same general formula. When used on `Maybe`, the type specializes to:
+Easy enough, right? If you want to make your type a functor, implement a `map` that works over it.  That's the rule specified in the interface. You're done. The conception of a functor, then, is just a container type that defines a `map` function so that its contents may be altered. The implementation varies and the type signature of `map` is specialized based on the functor in question, but it follows the same general formula. When used on `Maybe`, the type specializes to `(a -> b) -> Maybe a -> Maybe b` and the function argument is applied to the contents of `Just` (with a no-op on `Nothing`). When used on a `List`, the type specializes to `(a -> b) -> List a -> List b`, and the function argument is iteratively applied to each element in a list (with a no-op on empty lists).
 
-```
-map : (a -> b) -> Maybe a -> Maybe b
-```
+If this all feels belabored, it is to hopefully demonstrate that `Functor` is actually pretty easy. It turns out that its sister, `Monad`, is structurally nearly identical.
 
-When used on a `List`, the type specializes to:
-
-```
-map : (a -> b) -> List a -> List b
-```
-
-And of course, the implementation for `map` in each case must be different: it must iteratively apply some function `f` over the structure in a `List`; it must apply `f` to the contents inside `Just` in a `Maybe` (with a no-op on `Nothing`). If this all feels rather belabored, it is to hopefully demonstrate that functor is actually pretty easy, and that its sister, monad, is structurally nearly identical.
-
-So let's play around with the type of `map`. Below is the type signature of our original `map`, renamed `functorMap` for clarity, and a nearly identical signature for a new function, `monadMap`.
+So let's play around with the type of `map`. Below is the type signature of our original `map`, renamed `functorMap` for clarity, and a very similar signature for a new function, `monadMap`.
 
 ```
 functorMap : (a -> b)   -> f a -> f b
 monadMap   : (a -> f b) -> f a -> f b
 ```
 
-Congratulations, you understand everything about monads. No? Alright. Let's continue.
-
-The parameter `(a -> f b)` of `monadMap` is the only difference between it and `functorMap`, and it's what all the hand-wringing over monads is over. It turns out that there are a few meaningful implications to that subtle change. One is that since *you*, the user, return a custom `f b`, you control not only the inner values, but also the structure of the data you're operating on. Let's return to a `Maybe`:
+The parameter `(a -> f b)` of `monadMap` is the only difference between it and `functorMap`, and it's what all the hand-wringing over monads is over. It turns out that there are some meaningful implications to that subtle change. One is that since you, the user, return a custom `f b`, you control not only the inner values, but also the structure of the data you're operating on. Let's revisit `Maybe`, in particular where `monadMap` receives a `Just a`:
 
 ```
 functorMapMaybe : (a -> b) -> Maybe a -> Maybe b
@@ -118,9 +102,11 @@ monadMapMaybe f Nothing  = Nothing
 monadMapMaybe f (Just a) = f a  -- ...and here.
 ```
 
-You may or may not have noticed that `functorMap` does not let you transform the structure of the term you're operating on. You could run a million `functorMap` applications over `Just a` and, while you may change it to `Just b`, you can never produce `Nothing`. It is a structure-preserving operation.
+In the monadic version, the resulting `Maybe a` term is supplied by you via your function parameter `f`: `monadMapMaybe f (Just a) = f a`. In the functor version, it is embedded into the definition of the mapping function itself: `functorMapMaybe f (Just a) = Just (f a)`. 
 
-But `monadMap` discards the structure entirely in each application, forcing you to resupply it. Thus the outer structure of any `Maybe` can depend on its inner value. Here's an example function:
+You may or may not have noticed before that `functorMap` does not let you transform the structure of the term you're operating on. You could run a million `functorMap` applications over `Just a` and, while you may change it to `Just b`, you can never produce `Nothing`. It is a structure-preserving operation.
+
+But `monadMap` discards the structure entirely in each application, forcing you to resupply it. Thus the outer structure of any term that you chose to produce via `f` can depend on the inner value of the `Just a` that you're mapping over. Here's an example function:
 
 ```
 μ  exampleFunction v = if v < 10 then Nothing else Just v
@@ -128,7 +114,7 @@ But `monadMap` discards the structure entirely in each application, forcing you 
 Nothing
 ```
 
-The implication may still be opaque, until you reflect back onto the definition of `monadMap`. Monad mapping `f : (a -> f b)` over `Just a` yields `f b`, but mapping over `Nothing` always yields `Nothing`. If you can change the structure of the term you're operating on to `Nothing`, you can short-circuit any nesting of `monadMap` functions.
+The implication may still be opaque until you reflect back onto the definition of `monadMap`. Monad mapping `f : (a -> f b)` over `Just a` can yield `Just b` or `Nothing`, but mapping over `Nothing` always yields `Nothing`. In a nested sequence of `monadMapMaybe` functions, any function that produces a `Nothing` will change the result of every function applied after it to `Nothing`. That is, you can short-circuit any nesting of `monadMapMaybe` functions.
 
 You've created an automatic effect system, almost as though the type itself represents a sub-language within Mew. Take this example:
 ```
