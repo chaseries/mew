@@ -4,7 +4,7 @@ If you come from the imperative world and know a modern dynamic language like Ja
 
 Mapping is actually a very general idea that is not restricted to sequences like arrays or lists. It can happen over many other data structures that serve as containers for underlying values. This makes sense: things like trees, options, and tuples all contain some more primitive values wrapped up in their structure, and it is often these contents that we care about manipulating the most. Such "mappable" data structures are known as *functors* in the functional programming world.
 
-As a rule, `map` is always a function of the generalized type `(a -> b) -> f a -> f b`. This type signature specifies the following things about `map`:
+Thus the broad requirements of a functor are pretty simple: a data type and a mapping function to manipulate its contents. As a rule, `map` is always a function of the generalized type `(a -> b) -> f a -> f b`. This type signature specifies the following things about `map`:
 
 1. Its first parameter is a function that takes some value of type `a` and evaluates to some value of type `b`, denoted above as `(a -> b)`
 2. Its second parameter is a data structure of type `f` that holds an inner value of type `a`, denoted above as `f a`
